@@ -24,7 +24,7 @@ class RAGQAChain:
     def __init__(
         self,
         vdb: VectorDBManager,
-        llm_model: str = "llama3:8b",
+        llm_model: str = "qwen2:0.5b",
         max_history: int = 10,
     ):
         """

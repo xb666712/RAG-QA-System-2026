@@ -197,8 +197,26 @@ def main():
                 try:
                     result = st.session_state.rag_chain.ask(question)
                     st.session_state.chat_history = result["chat_history"]
+                    st.session_state.last_answer = result["answer"]
+                    st.session_state.last_sources = result.get("sources", [])
                     
-                    # 显示回答
+                    # 直接显示回答内容
+                    st.markdown("### 📋 回答")
+                    st.markdown(
+                        f"""
+                        <div class="chat-message assistant-message">
+                            <strong>🤖 助手：</strong> {result['answer']}
+                        </div>
+                        """,
+                        unsafe_allow_html=True
+                    )
+                    
+                    # 显示来源信息
+                    if st.session_state.last_sources:
+                        st.markdown("### 📚 参考来源")
+                        for idx, source in enumerate(st.session_state.last_sources, 1):
+                            st.markdown(f"{idx}. **{source['source']}** (相似度: {source['similarity']:.2f})")
+                    
                     st.success("回答完成！")
                 except Exception as e:
                     st.error(f"❌ 回答生成失败: {str(e)}")
@@ -213,28 +231,38 @@ def main():
         # 显示对话历史
         st.subheader("📝 对话历史")
         if st.session_state.chat_history:
-            for message in st.session_state.chat_history:
-                role = message["role"]
-                content = message["content"]
-                
-                if role == "user":
-                    st.markdown(
-                        f"""
-                        <div class="chat-message user-message">
-                            <strong>👤 你：</strong> {content}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
-                else:
-                    st.markdown(
-                        f"""
-                        <div class="chat-message assistant-message">
-                            <strong>🤖 助手：</strong> {content}
-                        </div>
-                        """,
-                        unsafe_allow_html=True
-                    )
+            # 创建容器用于滚动
+            with st.container(height=300):
+                for idx, message in enumerate(st.session_state.chat_history):
+                    role = message["role"]
+                    content = message["content"]
+                    
+                    if role == "user":
+                        st.markdown(
+                            f"""
+                            <div class="chat-message user-message" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; border-radius: 12px 12px 2px 12px; padding: 12px 16px; margin-bottom: 8px; max-width: 85%; margin-left: auto; box-shadow: 0 2px 8px rgba(102, 126, 234, 0.3);">
+                                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                                    <span style="font-size: 18px;">👤</span>
+                                    <span style="font-weight: 600; margin-left: 8px; font-size: 14px;">你</span>
+                                </div>
+                                <p style="margin: 0; font-size: 15px; line-height: 1.6;">{content}</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
+                    else:
+                        st.markdown(
+                            f"""
+                            <div class="chat-message assistant-message" style="background: #f1f5f9; border-radius: 12px 12px 12px 2px; padding: 12px 16px; margin-bottom: 8px; max-width: 85%; margin-right: auto; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05); border: 1px solid #e2e8f0;">
+                                <div style="display: flex; align-items: center; margin-bottom: 4px;">
+                                    <span style="font-size: 18px;">🤖</span>
+                                    <span style="font-weight: 600; margin-left: 8px; font-size: 14px; color: #64748b;">助手</span>
+                                </div>
+                                <p style="margin: 0; font-size: 15px; line-height: 1.6; color: #334155;">{content}</p>
+                            </div>
+                            """,
+                            unsafe_allow_html=True
+                        )
         else:
             st.info("暂无对话历史，请上传文档并开始提问")
 
